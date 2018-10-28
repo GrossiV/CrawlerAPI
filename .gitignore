@@ -1,5 +1,5 @@
 
-# Created by https://www.gitignore.io/api/venv,flask,python
+# Created by https://www.gitignore.io/api/venv,flask,python,visualstudiocode
 
 ### Flask ###
 instance/*
@@ -189,5 +189,13 @@ pip-selfcheck.json
 # Virtualenv
 # http://iamzed.com/2009/05/07/a-primer-on-virtualenv/
 
+### VisualStudioCode ###
+.vscode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
-# End of https://www.gitignore.io/api/venv,flask,python
+
+# End of https://www.gitignore.io/api/venv,flask,python,visualstudiocode
