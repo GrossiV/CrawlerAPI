@@ -1,3 +1,6 @@
+"""API to crawl a webpage data and output how many times a specific
+    word appears on it"""
+
 import re
 import requests
 from bs4 import BeautifulSoup
@@ -32,31 +35,28 @@ def count_occurrences(text, word):
     result = re.findall(word, text, re.IGNORECASE)
     return len(result)
 
-app = Flask(__name__)
-api = Api(app)
+APP = Flask(__name__)
+API = Api(APP)
 
 
 
 class About(Resource):
+    """Class to config the api access methods"""
     def get(self):
-        # parse arguments
-        print('inside your get')
+        """Receives an url and word to return how many times this word appears in the url-page"""
         parser = reqparse.RequestParser()
         parser.add_argument('url', type=str, help='provide an url')
-        parser.add_argument('word', type=str, help='provide a word' )
+        parser.add_argument('word', type=str, help='provide a word')
         args = parser.parse_args()
-        print("stage 1")
+
         soup = get_soup(args.url)
-        print("stage 2")
         text = clean_text(soup)
-        print("stage 3")
         word_count = count_occurrences(text, args.word)
-        print("stage 4")
 
         return {"occurrences" : word_count}
 
-api.add_resource(About, '/')
+API.add_resource(About, '/')
 
 if __name__ == '__main__':
-    print('program started')
-    app.run(debug=True)
+    APP.run(debug=True)
+    
