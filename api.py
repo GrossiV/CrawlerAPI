@@ -7,7 +7,7 @@ from flask_restful import Resource, Api, reqparse
 
 def get_soup(url):
     """get and parse html data from provided url"""
-    result = requests.get("https://www.pontotel.com.br/")
+    result = requests.get(url)
     content = result.content
     soup = BeautifulSoup(content, features='html.parser')
     return soup
@@ -28,8 +28,8 @@ def clean_text(soup):
     return text
 
 def count_occurrences(text, word):
-    result = re.findall('Astra', text, re.IGNORECASE)
-    print(len(result))
+    """count how many times the provided word appear in the page content"""
+    result = re.findall(word, text, re.IGNORECASE)
     return len(result)
 
 app = Flask(__name__)
@@ -39,14 +39,24 @@ api = Api(app)
 
 class About(Resource):
     def get(self):
+        # parse arguments
+        print('inside your get')
         parser = reqparse.RequestParser()
-        parser.add_argument('rate', type=int, help='Rate cannot be converted')
-        parser.add_argument('name')
+        parser.add_argument('url', type=str, help='provide an url')
+        parser.add_argument('word', type=str, help='provide a word' )
         args = parser.parse_args()
-        print(args)
-        return {args.rate : args.name}
+        print("stage 1")
+        soup = get_soup(args.url)
+        print("stage 2")
+        text = clean_text(soup)
+        print("stage 3")
+        word_count = count_occurrences(text, args.word)
+        print("stage 4")
+
+        return {"occurrences" : word_count}
 
 api.add_resource(About, '/')
 
 if __name__ == '__main__':
+    print('program started')
     app.run(debug=True)
