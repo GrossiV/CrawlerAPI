@@ -1,11 +1,10 @@
-"""API to crawl a webpage data and output how many times a specific
-    word appears on it"""
+"""API to crawl a webpage data and output how many times a specific word appears on it"""
 
 import re
 import requests
 from bs4 import BeautifulSoup
 from flask import Flask
-from flask_restful import Resource, Api, reqparse
+from flask_restplus import Resource, Api, reqparse
 
 
 def get_soup(url):
@@ -40,7 +39,7 @@ API = Api(APP)
 
 
 
-class About(Resource):
+class Crawler(Resource):
     """Class to config the api access methods"""
     def get(self):
         """Receives an url and word to return how many times this word appears in the url-page"""
@@ -55,7 +54,7 @@ class About(Resource):
 
         return {"occurrences" : word_count}
 
-API.add_resource(About, '/')
+API.add_resource(Crawler, '/api')
 
 if __name__ == '__main__':
     APP.run(debug=True)

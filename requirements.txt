@@ -1,6 +1,5 @@
 Flask
-flask-restful
-flask-restful-swagger
+flask-requests
 beautifulsoup4
 requests
 asyncio
