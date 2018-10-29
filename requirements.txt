@@ -1,4 +1,7 @@
 Flask
 flask-restful
+flask-restful-swagger
 beautifulsoup4
 requests
+asyncio
+pytest
