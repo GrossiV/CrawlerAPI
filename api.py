@@ -6,19 +6,21 @@ from bs4 import BeautifulSoup
 from flask import Flask, Blueprint
 from flask_restplus import Resource, Api, reqparse
 
-# tornar assincrono apenas o get url enquanto esperar baixar o html, o resto  nao precisa
-def get_soup(url):
-    """get and parse html data from provided url"""
-    result = requests.get(url)
-    content = result.content
-    soup = BeautifulSoup(content, features='html.parser')
+
+# tornar assincrono apenas o get_response_object enquanto esperar baixar o html, o resto  nao precisa
+def get_response_object(url): #unica funcao assincrona da API
+    # return requests.get(url)
+    response_object = requests.get(url)
+    return response_object
+
+def get_html_from_response(response):
+    soup = BeautifulSoup(response.content, features='html.parser')
     return soup
 
 def clean_text(soup):
-    """Remove script, style and formate the text properly"""
-    # kill all script and style elements
+    """Remove script and style elements"""
     for script in soup(["script", "style"]):
-        script.extract()    # rip it out
+        script.extract() 
     text = soup.body.get_text()
     return text
 
@@ -46,8 +48,9 @@ class Crawler(Resource):
         parser.add_argument('word', type=str, required=True)
         args = parser.parse_args()
 
-        soup = get_soup(args.url)
-        text = clean_text(soup)
+        response = get_response_object(args.url)
+        html = get_html_from_response(response)
+        text = clean_text(html)
         word_count = count_occurrences(text, args.word)
 
         return {"occurrences" : word_count}, 200
