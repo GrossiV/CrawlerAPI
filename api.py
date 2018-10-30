@@ -3,10 +3,10 @@
 import re
 import requests
 from bs4 import BeautifulSoup
-from flask import Flask
+from flask import Flask, Blueprint
 from flask_restplus import Resource, Api, reqparse
 
-
+# tornar assincrono apenas o get url enquanto esperar baixar o html, o resto  nao precisa
 def get_soup(url):
     """get and parse html data from provided url"""
     result = requests.get(url)
@@ -19,14 +19,7 @@ def clean_text(soup):
     # kill all script and style elements
     for script in soup(["script", "style"]):
         script.extract()    # rip it out
-    #occurrences = soup.body.find_all(text=True)
     text = soup.body.get_text()
-    # break into lines and remove leading and trailing space on each
-    lines = (line.strip() for line in text.splitlines())
-    # break multi-headlines into a line each
-    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-    # drop blank lines
-    text = '\n'.join(chunk for chunk in chunks if chunk)
     return text
 
 def count_occurrences(text, word):
@@ -34,25 +27,30 @@ def count_occurrences(text, word):
     result = re.findall(word, text, re.IGNORECASE)
     return len(result)
 
+
 APP = Flask(__name__)
-API = Api(APP)
+API = Api(APP, version='1.0', title='Crawler API', description='Count how many times a specific word appears in a webpage')
 
 
+@API.doc(params={
+    'url': 'List of pages to search for a specif word, e.g. "https://google.com"',
+    'word': 'Word to be searched in each item of the provided list, e.g "gmail"',
+    })
 
 class Crawler(Resource):
     """Class to config the api access methods"""
     def get(self):
-        """Receives an url and word to return how many times this word appears in the url-page"""
+        """Get how many times a provided word appears in the page"""
         parser = reqparse.RequestParser()
-        parser.add_argument('url', type=str, help='provide an url')
-        parser.add_argument('word', type=str, help='provide a word')
+        parser.add_argument('url', type=str, required=True)
+        parser.add_argument('word', type=str, required=True)
         args = parser.parse_args()
 
         soup = get_soup(args.url)
         text = clean_text(soup)
         word_count = count_occurrences(text, args.word)
 
-        return {"occurrences" : word_count}
+        return {"occurrences" : word_count}, 200
 
 API.add_resource(Crawler, '/api')
 
