@@ -7,9 +7,7 @@ from flask import Flask, Blueprint
 from flask_restplus import Resource, Api, reqparse
 
 
-# tornar assincrono apenas o get_response_object enquanto esperar baixar o html, o resto  nao precisa
 def get_response_object(url): #unica funcao assincrona da API
-    # return requests.get(url)
     response_object = requests.get(url)
     return response_object
 
@@ -17,17 +15,19 @@ def get_html_from_response(response):
     soup = BeautifulSoup(response.content, features='html.parser')
     return soup
 
-def clean_text(soup):
+def remove_script_and_styles_from_html(html_data):
     """Remove script and style elements"""
-    for script in soup(["script", "style"]):
-        script.extract() 
-    text = soup.body.get_text()
+    for script in html_data(["script", "style"]):
+        script.extract()
+    return html_data
+
+def get_text_from_html(clean_html_data):
+    text = clean_html_data.body.get_text()
     return text
 
-def count_occurrences(text, word):
-    """count how many times the provided word appear in the page content"""
-    result = re.findall(word, text, re.IGNORECASE)
-    return len(result)
+def count_occurrences_of_word_in_text(text, word):
+    found_words_list = re.findall(word, text, re.IGNORECASE)
+    return len(found_words_list)
 
 
 APP = Flask(__name__)
@@ -49,11 +49,12 @@ class Crawler(Resource):
         args = parser.parse_args()
 
         response = get_response_object(args.url)
-        html = get_html_from_response(response)
-        text = clean_text(html)
-        word_count = count_occurrences(text, args.word)
+        html_data = get_html_from_response(response)
+        clean_html_data = remove_script_and_styles_from_html(html_data)
+        text = get_text_from_html(clean_html_data)
+        number_of_words = count_occurrences_of_word_in_text(text, args.word)
 
-        return {"occurrences" : word_count}, 200
+        return {"occurrences" : number_of_words}, 200
 
 API.add_resource(Crawler, '/api')
 
