@@ -7,6 +7,11 @@ from flask import Flask, Blueprint
 from flask_restplus import Resource, Api, reqparse
 
 
+def url_validator(url):
+    if not url.startswith('http'):
+        url = 'http://'+ str(url)
+    return url
+
 def get_response_object_from_url(url): #unica funcao assincrona da API
     response_object = requests.get(url)
     return response_object
@@ -33,7 +38,6 @@ def count_occurrences_of_word_in_text(text, word):
 APP = Flask(__name__)
 API = Api(APP, version='1.0', title='Crawler API', description='Count how many times a specific word appears in a webpage')
 
-
 @API.doc(params={
     'url': 'List of pages to search for a specif word, e.g. "https://google.com"',
     'word': 'Word to be searched in each item of the provided list, e.g "gmail"',
@@ -47,11 +51,20 @@ class Crawler(Resource):
         parser.add_argument('url', action='append', type=str, required=True)
         parser.add_argument('word', type=str, required=True)
         args = parser.parse_args()
+        
         result = dict()
         result['word'] = args.word
 
         for url in args.url:
-            response = get_response_object_from_url(url)
+            url = url_validator(url)
+            
+            # prevent crash from wrong urls
+            try:
+                response = get_response_object_from_url(url)
+            except requests.exceptions.ConnectionError:
+                result[url] = 'Connection error, check your url and try again'
+                continue
+
             html_data = get_html_from_response(response)
             clean_html_data = remove_script_and_styles_from_html(html_data)
             text = get_text_from_html(clean_html_data)
