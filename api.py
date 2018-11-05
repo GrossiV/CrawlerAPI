@@ -3,8 +3,20 @@
 import re
 import requests
 from bs4 import BeautifulSoup
-from flask import Flask, Blueprint
+from flask import Flask
 from flask_restplus import Resource, Api, reqparse
+from flask_caching import Cache
+
+
+CACHE = Cache(config={'CACHE_TYPE': 'simple'})
+APP = Flask(__name__)
+CACHE.init_app(APP)
+API = Api(APP, version='1.0', title='Crawler API', description='Count how many times a specific word appears in a webpage')
+
+@API.doc(params={
+    'url': 'List of pages to search for a specif word, e.g. "https://google.com"',
+    'word': 'Word to be searched in each item of the provided list, e.g "gmail"',
+    })
 
 
 def url_validator(url):
@@ -12,6 +24,7 @@ def url_validator(url):
         url = 'http://'+ str(url)
     return url
 
+@CACHE.memoize(timeout=300)
 def get_response_object_from_url(url): #unica funcao assincrona da API
     response_object = requests.get(url)
     return response_object
@@ -21,7 +34,6 @@ def get_html_from_response(response):
     return soup
 
 def remove_script_and_styles_from_html(html_data):
-    """Remove script and style elements"""
     for script in html_data(["script", "style"]):
         script.extract()
     return html_data
@@ -34,19 +46,10 @@ def count_occurrences_of_word_in_text(text, word):
     found_words_list = re.findall(word, text, re.IGNORECASE)
     return len(found_words_list)
 
-
-APP = Flask(__name__)
-API = Api(APP, version='1.0', title='Crawler API', description='Count how many times a specific word appears in a webpage')
-
-@API.doc(params={
-    'url': 'List of pages to search for a specif word, e.g. "https://google.com"',
-    'word': 'Word to be searched in each item of the provided list, e.g "gmail"',
-    })
-
 class Crawler(Resource):
     """Class to config the api access methods"""
     def get(self):
-        """Get how many times a provided word appears in the page"""
+        """Count how many times a specific word appears in a webpage"""
         parser = reqparse.RequestParser()
         parser.add_argument('url', action='append', type=str, required=True)
         parser.add_argument('word', type=str, required=True)
@@ -57,12 +60,12 @@ class Crawler(Resource):
 
         for url in args.url:
             url = url_validator(url)
-            
-            # prevent crash from wrong urls
+
+            # prevent api crash from wrong urls
             try:
                 response = get_response_object_from_url(url)
             except requests.exceptions.ConnectionError:
-                result[url] = 'Connection error, check your url and try again'
+                result[url] = 'Wrong url address'
                 continue
 
             html_data = get_html_from_response(response)
