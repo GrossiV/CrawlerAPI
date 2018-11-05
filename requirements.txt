@@ -1,6 +1,8 @@
-Flask
-flask-requests
-beautifulsoup4
-requests
 asyncio
+aiohhtp
+beautifulsoup4
 pytest
+Flask
+Flask-Caching
+flask-restplus
+requests
