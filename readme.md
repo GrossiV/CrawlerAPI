@@ -38,4 +38,4 @@
 
 
 
-###### O projeto ainda será continuado em breve :)
+###### O projeto ainda será melhorado/continuado em breve :)
